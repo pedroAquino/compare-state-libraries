@@ -25,6 +25,9 @@
     "trello-like-board-e2e": {
       "tags": [],
       "implicitDependencies": ["trello-like-board"]
+    },
+    "api": {
+      "tags": []
     }
   }
 }
