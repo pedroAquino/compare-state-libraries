@@ -1,24 +1,12 @@
 import 'typeface-roboto-slab';
 import './reset.css';
 import './app.css';
+import { Provider } from 'react-redux';
 import styles from './app.module.scss';
 import Logo from './trello-logo.gif';
 import Draggable from 'react-draggable';
 import React, { useRef, useState } from 'react';
-
-interface Task {
-  id: number;
-  title: string;
-  content: string;
-};
-
-const tasks = [
-  {
-    id: 1,
-    title: 'task 1',
-    content: 'some content'
-  }
-];
+import { Column as ColumnModel, store, Task, useAppDispatch, useAppSelector, useGetColumnsQuery } from './state';
 
 const Header = () => (
   <header className={styles.header}>
@@ -28,10 +16,8 @@ const Header = () => (
   </header>
 );
 
-const Content = ({ children }: { children: React.ReactNode }) => <div className={styles.content} >{children}</div>;
-
-const Card = ({ title }: Task) => {
-  const [value, setValue] = useState<string>(title);
+const Card = ({ content }: Task) => {
+  const [value, setValue] = useState<string>(content);
   const ref = useRef(null);
   function onChange(evt: React.ChangeEvent<HTMLInputElement>) {
     setValue(evt.target.value);
@@ -49,10 +35,10 @@ const Card = ({ title }: Task) => {
   );
 }
 
-const Column = ({ tasks, title }: { tasks: Task[], title: string }) => (
+const Column = ({ id, name }: ColumnModel) => (
   <div className={styles.column} >
-    <header>{title}</header>
-    { tasks.map((task) => <Card key={task.id} {...task} />) }
+    <header>{name}</header>
+    {/* { tasks.map((task) => <Card key={task.id} {...task} />) } */}
     <div className={styles.column__button_container}>
       <span className={styles.column__plus_icon}>+</span>
       <span>Add another card</span>
@@ -60,16 +46,27 @@ const Column = ({ tasks, title }: { tasks: Task[], title: string }) => (
   </div>
 );
 
+const Content = () =>  {
+  const { data , error, isLoading } = useGetColumnsQuery(null);
+  const dispatch = useAppDispatch();
+  return (
+    <div className={styles.content}>
+      {
+        error ? (<>There was an error fetching the data</>) :
+        isLoading ? (<>Loading...</>) :
+        data ? (data.map(col => <Column key={col.id}  {...col} />)) :
+        null
+      }
+    </div>
+  );
+};
+
 export function App() {
   return (
-    <>
+    <Provider store={store}>
       <Header />
-      <Content>
-        <Column tasks={tasks} title="to do" />
-        <Column tasks={tasks} title="in progress" />
-        <Column tasks={tasks} title="done" />
-      </Content>
-    </>
+      <Content />
+    </Provider>
   );
 }
 
