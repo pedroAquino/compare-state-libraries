@@ -4,9 +4,10 @@ import './app.css';
 import { Provider } from 'react-redux';
 import styles from './app.module.scss';
 import Logo from './trello-logo.gif';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableData, DraggableEventHandler } from 'react-draggable';
 import React, { useRef, useState } from 'react';
-import { Column as ColumnModel, store, Task, useAppDispatch, useAppSelector, useGetColumnsQuery } from './state';
+import { Column as ColumnModel, draggingSelector, dragSTop, store, Task, useAppDispatch, useAppSelector, useGetColumnsQuery, useGetTasksByColumnQuery } from './state';
+import { wasDraggedInside } from './helper';
 
 const Header = () => (
   <header className={styles.header}>
@@ -16,9 +17,10 @@ const Header = () => (
   </header>
 );
 
-const Card = ({ content }: Task) => {
+const Card = ({ content, id }: Task) => {
   const [value, setValue] = useState<string>(content);
   const ref = useRef(null);
+  const dispatch = useAppDispatch();
   function onChange(evt: React.ChangeEvent<HTMLInputElement>) {
     setValue(evt.target.value);
   }
@@ -26,29 +28,48 @@ const Card = ({ content }: Task) => {
     evt.preventDefault();
     console.log('SAVE');
   }
+  function onDragStop(e: Event, {x, y} : DraggableData) {
+    dispatch(dragSTop({
+      coords: {x, y},
+      draggableItemId: id
+    }));
+  }
   return (
-    <Draggable nodeRef={ref}>
-      <form ref={ref} onSubmit={onSubmit}>
-        <input type="text" value={value} className={styles.card} onChange={onChange} />
+    <Draggable onStop={onDragStop} defaultClassName={styles.card} nodeRef={ref}>
+      <form id={id} ref={ref} onSubmit={onSubmit}>
+        <input type="text" value={value} className={styles.card__input} onChange={onChange} />
       </form>
     </Draggable>
   );
 }
 
-const Column = ({ id, name }: ColumnModel) => (
-  <div className={styles.column} >
-    <header>{name}</header>
-    {/* { tasks.map((task) => <Card key={task.id} {...task} />) } */}
-    <div className={styles.column__button_container}>
-      <span className={styles.column__plus_icon}>+</span>
-      <span>Add another card</span>
+const Column = ({ id, name }: ColumnModel) => {
+  const { data , error, isLoading } = useGetTasksByColumnQuery(id);
+  const ref = useRef(null);
+  const draggingState = useAppSelector(draggingSelector);
+  const haveSomethingInside = wasDraggedInside(draggingState.coords, ref.current);
+  //console.log('haveSomethingInside', haveSomethingInside, ref.current);
+  return (
+    <div ref={ref} className={styles.column}>
+      <div className={styles.column__inner}>
+        <header>{name}</header>
+        {
+          error ? (<>There was an error fetching the data</>) :
+          isLoading ? (<>Loading...</>) :
+          data ? (data.map(task => <Card key={task.id}  {...task} />)) :
+          null
+        }
+        <div className={styles.column__button_container}>
+          <span className={styles.column__plus_icon}>+</span>
+          <span>Add another card</span>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
 const Content = () =>  {
   const { data , error, isLoading } = useGetColumnsQuery(null);
-  const dispatch = useAppDispatch();
   return (
     <div className={styles.content}>
       {

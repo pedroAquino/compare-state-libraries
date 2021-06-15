@@ -20,13 +20,35 @@ export interface Column {
   tasks: Array<Task>;
 }
 
-export interface ColumnsState {
-  columns: Array<Column>;
+export type Coords = {
+  x:number;
+  y:number;
 }
 
-const initialState: ColumnsState = {
-  columns: []
-};
+export interface DraggingState {
+  draggableItemId: string | null;
+  coords: Coords | null;
+}
+
+const initialState: DraggingState = {
+  draggableItemId: null,
+  coords: null
+}
+
+const draggingSlice = createSlice({
+  name: 'dragging',
+  initialState,
+  reducers: {
+    dragSTop: (state, action) => {
+      state.coords = action.payload.coords;
+      state.draggableItemId = action.payload.draggableItemId;
+    }
+  }
+});
+
+export const draggingSelector = (state: RootState) => state.dragging;
+
+export const { dragSTop } = draggingSlice.actions;
 
 const api = createApi({
   reducerPath: 'api',
@@ -34,15 +56,19 @@ const api = createApi({
   endpoints: (builder) => ({
     getColumns: builder.query<Column[], null>({
       query: () => '/columns'
-    })
+    }),
+    getTasksByColumn: builder.query<Task[], number>({
+      query: (columnId: number) => `/columns/${columnId}/tasks`
+    }),
   })
 })
 
-export const { useGetColumnsQuery } = api;
+export const { useGetColumnsQuery, useGetTasksByColumnQuery } = api;
 
 export const store = configureStore({
   reducer: {
-    [api.reducerPath]: api.reducer
+    [api.reducerPath]: api.reducer,
+    dragging: draggingSlice.reducer,
   },
   middleware: (getDefaultMiddleware) => {
     return [
