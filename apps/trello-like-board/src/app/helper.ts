@@ -16,7 +16,7 @@ function dimensions(el: HTMLElement) {
 
 export function wasDraggedInside(draggingElOffset: Coords | null, draggingArea: HTMLElement | null) {
   if (!draggingElOffset|| !draggingArea)
-    return;
+    return false;
   const draggingAreaOffset = offset(draggingArea);
   const draggingAreaDimensions = dimensions(draggingArea);
   

@@ -5,8 +5,8 @@ import { Provider } from 'react-redux';
 import styles from './app.module.scss';
 import Logo from './trello-logo.gif';
 import Draggable, { DraggableData, DraggableEventHandler } from 'react-draggable';
-import React, { useRef, useState } from 'react';
-import { Column as ColumnModel, draggingSelector, dragSTop, store, Task, useAppDispatch, useAppSelector, useGetColumnsQuery, useGetTasksByColumnQuery } from './state';
+import React, { useEffect, useRef, useState } from 'react';
+import { Column as ColumnModel, draggingSelector, dragSTop, store, Task, useAppDispatch, useAppSelector, useGetColumnsQuery, useGetTasksByColumnQuery, useUpdateTaskMutation } from './state';
 import { wasDraggedInside } from './helper';
 
 const Header = () => (
@@ -17,7 +17,7 @@ const Header = () => (
   </header>
 );
 
-const Card = ({ content, id }: Task) => {
+const Card = ({ content, id, columnId }: Task) => {
   const [value, setValue] = useState<string>(content);
   const ref = useRef(null);
   const dispatch = useAppDispatch();
@@ -31,7 +31,7 @@ const Card = ({ content, id }: Task) => {
   function onDragStop(e: Event, {x, y} : DraggableData) {
     dispatch(dragSTop({
       coords: {x, y},
-      draggableItemId: id
+      draggableItem: { content, id,columnId }
     }));
   }
   return (
@@ -47,8 +47,21 @@ const Column = ({ id, name }: ColumnModel) => {
   const { data , error, isLoading } = useGetTasksByColumnQuery(id);
   const ref = useRef(null);
   const draggingState = useAppSelector(draggingSelector);
+  const [
+    updateTask, 
+    { isLoading: isUpdating }
+  ] = useUpdateTaskMutation();
   const haveSomethingInside = wasDraggedInside(draggingState.coords, ref.current);
-  //console.log('haveSomethingInside', haveSomethingInside, ref.current);
+
+  useEffect(() => {
+    if (haveSomethingInside) {
+      updateTask({
+        ...draggingState.draggableItem,
+        columnId: id
+      })
+    }
+  }, [haveSomethingInside]);
+
   return (
     <div ref={ref} className={styles.column}>
       <div className={styles.column__inner}>
@@ -84,7 +97,7 @@ const Content = () =>  {
 
 export function App() {
   return (
-    <Provider store={store}>
+    <Provider store={store}>  
       <Header />
       <Content />
     </Provider>

@@ -26,12 +26,12 @@ export type Coords = {
 }
 
 export interface DraggingState {
-  draggableItemId: string | null;
+  draggableItem: any;
   coords: Coords | null;
 }
 
 const initialState: DraggingState = {
-  draggableItemId: null,
+  draggableItem: null,
   coords: null
 }
 
@@ -41,7 +41,7 @@ const draggingSlice = createSlice({
   reducers: {
     dragSTop: (state, action) => {
       state.coords = action.payload.coords;
-      state.draggableItemId = action.payload.draggableItemId;
+      state.draggableItem = action.payload.draggableItem;
     }
   }
 });
@@ -60,10 +60,17 @@ const api = createApi({
     getTasksByColumn: builder.query<Task[], number>({
       query: (columnId: number) => `/columns/${columnId}/tasks`
     }),
+    updateTask: builder.mutation<Task, Task>({
+      query: ({columnId, id, ...task}) => ({
+        url: `/columns/${columnId}/tasks/${id}`,
+        method: 'PUT',
+        body: task
+      })
+    })
   })
 })
 
-export const { useGetColumnsQuery, useGetTasksByColumnQuery } = api;
+export const { useGetColumnsQuery, useGetTasksByColumnQuery, useUpdateTaskMutation } = api;
 
 export const store = configureStore({
   reducer: {

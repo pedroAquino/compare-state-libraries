@@ -31,6 +31,10 @@
     padding-left: 24px;
   }
 
+  &:last-child {
+    width: 100%;
+  }
+
   .column__inner {
     width: 272px;
     background: #ebecf0;
