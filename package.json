@@ -5,6 +5,7 @@
   "scripts": {
     "nx": "nx",
     "start": "nx serve",
+    "api:serve": "nx run api:serve",
     "build": "nx build",
     "test": "nx test",
     "lint": "nx workspace-lint && nx lint",
@@ -35,6 +36,7 @@
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-draggable": "^4.4.3",
+    "recoil": "^0.3.1",
     "regenerator-runtime": "0.13.7",
     "tslib": "^2.0.0",
     "typeface-roboto-slab": "^1.1.13",

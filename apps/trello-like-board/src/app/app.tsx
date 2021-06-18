@@ -4,7 +4,9 @@ import './app.css';
 import styles from './app.module.scss';
 import Logo from './trello-logo.gif';
 import Draggable from 'react-draggable';
-import React, { useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { RecoilRoot, useRecoilValue } from 'recoil';
+import { Column as ColumnModel, columnsListQuery, getTasksQuery } from './state';
 
 interface Task {
   id: number;
@@ -28,10 +30,9 @@ const Header = () => (
   </header>
 );
 
-const Content = ({ children }: { children: React.ReactNode }) => <div className={styles.content} >{children}</div>;
-
-const Card = ({ title }: Task) => {
-  const [value, setValue] = useState<string>(title);
+const Card = ({ content }: Task) => {
+  console.log(content)
+  const [value, setValue] = useState<string>(content);
   const ref = useRef(null);
   function onChange(evt: React.ChangeEvent<HTMLInputElement>) {
     setValue(evt.target.value);
@@ -49,27 +50,45 @@ const Card = ({ title }: Task) => {
   );
 }
 
-const Column = ({ tasks, title }: { tasks: Task[], title: string }) => (
-  <div className={styles.column} >
-    <header>{title}</header>
-    { tasks.map((task) => <Card key={task.id} {...task} />) }
-    <div className={styles.column__button_container}>
-      <span className={styles.column__plus_icon}>+</span>
-      <span>Add another card</span>
-    </div>
-  </div>
-);
-
-export function App() {
+const Column = ({ name, id, tasks }: ColumnModel) => {
   return (
-    <>
-      <Header />
-      <Content>
-        <Column tasks={tasks} title="to do" />
-        <Column tasks={tasks} title="in progress" />
-        <Column tasks={tasks} title="done" />
-      </Content>
-    </>
+    <div className={styles.column} >
+      <header>{name}</header>
+      {tasks.map((task: Task) => (
+        <div className={styles.column__card}>
+          <Card key={task.id} {...task} />
+        </div>
+      ))}
+      <div className={styles.column__button_container}>
+        <span className={styles.column__plus_icon}>+</span>
+        <span>Add another card</span>
+      </div>
+    </div>
+  );
+};
+
+
+const Content = () => {
+  const columns = useRecoilValue(columnsListQuery);
+  const tasks = useRecoilValue(getTasksQuery);
+  return (
+    <div className={styles.content}>
+        {
+          columns.map(col => <Column key={col.id} {...col} tasks={tasks[col.id]}  />)
+        }
+    </div>
+  )
+}
+
+
+export function App() {  
+  return (
+    <RecoilRoot>
+      <Suspense fallback={<p>Loading...</p>}>
+        <Header />
+        <Content />
+      </Suspense>
+    </RecoilRoot>
   );
 }
 

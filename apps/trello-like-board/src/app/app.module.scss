@@ -28,6 +28,11 @@
   background: #ebecf0;
   padding: 8px;
   border-radius: 8px;
+
+  & .column__card:not(:first-child) {
+    margin-top: 8px;
+  }
+
   & header {
     margin-bottom: 24px;
     font-size: 14px;
